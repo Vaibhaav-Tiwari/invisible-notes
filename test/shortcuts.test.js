@@ -15,6 +15,7 @@ function shortcutInput(key, overrides = {}) {
   return {
     type: 'keyDown',
     key,
+    code: `Key${key.toUpperCase()}`,
     shift: true,
     alt: false,
     control: !platform.isMac,
@@ -29,6 +30,12 @@ test('recognizes app shortcuts with the platform modifier', () => {
   assert.equal(shortcutNameForInput(shortcutInput('h')), 'toggleHideAll');
   assert.equal(shortcutNameForInput(shortcutInput('G')), 'toggleGhostAll');
   assert.equal(shortcutNameForInput(shortcutInput('m')), 'openManager');
+});
+
+test('uses physical key codes across keyboard layouts and falls back when unavailable', () => {
+  assert.equal(shortcutNameForInput(shortcutInput('т', { code: 'KeyN' })), 'newNote');
+  assert.equal(shortcutNameForInput(shortcutInput('n', { code: 'KeyQ' })), null);
+  assert.equal(shortcutNameForInput(shortcutInput('n', { code: '' })), 'newNote');
 });
 
 test('ignores incomplete, modified, repeated, and key-up input', () => {

@@ -19,9 +19,14 @@ const ACTION_BY_KEY = {
   m: 'openManager'
 };
 
+const ACTION_BY_CODE = Object.fromEntries(
+  Object.entries(ACTION_BY_KEY).map(([key, action]) => [`Key${key.toUpperCase()}`, action])
+);
+
 function shortcutNameForInput(input) {
   if (!input || input.type !== 'keyDown' || input.isAutoRepeat) return null;
   if (!platform.isCommandOrControlPressed(input) || !input.shift || input.alt) return null;
+  if (input.code) return ACTION_BY_CODE[input.code] || null;
   return ACTION_BY_KEY[String(input.key || '').toLowerCase()] || null;
 }
 
