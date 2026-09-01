@@ -72,7 +72,6 @@ test('registers and unregisters the global recovery shortcut', () => {
   let newNotes = 0;
 
   assert.equal(registerFallbackShortcut(globalShortcut, () => newNotes++), true);
-  assert.equal(registeredBinding, 'CommandOrControl+Alt+Shift+N');
   assert.equal(registeredBinding, FALLBACK_BINDING);
   registeredHandler();
   assert.equal(newNotes, 1);
