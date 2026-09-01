@@ -3,7 +3,13 @@ const assert = require('node:assert/strict');
 const { EventEmitter } = require('node:events');
 
 const platform = require('../platform');
-const { registerShortcuts, shortcutNameForInput } = require('../shortcuts');
+const {
+  registerShortcuts,
+  registerFallbackShortcut,
+  unregisterFallbackShortcut,
+  shortcutNameForInput,
+  FALLBACK_BINDING
+} = require('../shortcuts');
 
 function shortcutInput(key, overrides = {}) {
   return {
@@ -47,4 +53,30 @@ test('handles shortcuts only through the registered Ghost Notes window', () => {
 
   assert.equal(newNotes, 1);
   assert.equal(prevented, true);
+});
+
+test('registers and unregisters the global recovery shortcut', () => {
+  let registeredBinding = null;
+  let registeredHandler = null;
+  let unregisteredBinding = null;
+  const globalShortcut = {
+    register: (binding, handler) => {
+      registeredBinding = binding;
+      registeredHandler = handler;
+      return true;
+    },
+    unregister: (binding) => {
+      unregisteredBinding = binding;
+    }
+  };
+  let newNotes = 0;
+
+  assert.equal(registerFallbackShortcut(globalShortcut, () => newNotes++), true);
+  assert.equal(registeredBinding, 'CommandOrControl+Alt+Shift+N');
+  assert.equal(registeredBinding, FALLBACK_BINDING);
+  registeredHandler();
+  assert.equal(newNotes, 1);
+
+  unregisterFallbackShortcut(globalShortcut);
+  assert.equal(unregisteredBinding, FALLBACK_BINDING);
 });

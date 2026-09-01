@@ -1,10 +1,25 @@
-const { app, ipcMain, screen, Tray, Menu, nativeImage, dialog, powerMonitor, safeStorage } = require('electron');
+const {
+  app,
+  ipcMain,
+  screen,
+  Tray,
+  Menu,
+  nativeImage,
+  dialog,
+  powerMonitor,
+  safeStorage,
+  globalShortcut
+} = require('electron');
 const path = require('path');
 const { NoteStore } = require('./store');
 const platform = require('./platform');
 const { createNoteWindow, applyContentProtection } = require('./noteWindow');
 const { clampToVisibleDisplay, displayIdForPoint } = require('./displayUtils');
-const { registerShortcuts } = require('./shortcuts');
+const {
+  registerShortcuts,
+  registerFallbackShortcut,
+  unregisterFallbackShortcut
+} = require('./shortcuts');
 const { createManagerModule } = require('./manager');
 
 // Show plain-language notices only — never a raw stack trace to the user.
@@ -326,6 +341,7 @@ if (!gotLock) {
     manager = createManager();
 
     setupTray();
+    registerFallbackShortcut(globalShortcut, () => createNoteNearCursor());
 
     const records = store.all();
     if (records.length === 0) {
@@ -348,6 +364,10 @@ if (!gotLock) {
 
   app.on('before-quit', () => {
     store.flush();
+  });
+
+  app.on('will-quit', () => {
+    unregisterFallbackShortcut(globalShortcut);
   });
 
   // Keep running with no visible windows (tray app).

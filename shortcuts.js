@@ -10,6 +10,8 @@ const BINDINGS = {
   openManager: 'CommandOrControl+Shift+M'
 };
 
+const FALLBACK_BINDING = 'CommandOrControl+Alt+Shift+N';
+
 const ACTION_BY_KEY = {
   n: 'newNote',
   h: 'toggleHideAll',
@@ -33,4 +35,23 @@ function registerShortcuts(win, actions) {
   });
 }
 
-module.exports = { registerShortcuts, shortcutNameForInput, BINDINGS };
+function registerFallbackShortcut(globalShortcut, handler) {
+  const registered = globalShortcut.register(FALLBACK_BINDING, handler);
+  if (!registered) {
+    console.warn(`Fallback shortcut ${FALLBACK_BINDING} could not be registered — likely in use by another app.`);
+  }
+  return registered;
+}
+
+function unregisterFallbackShortcut(globalShortcut) {
+  globalShortcut.unregister(FALLBACK_BINDING);
+}
+
+module.exports = {
+  registerShortcuts,
+  registerFallbackShortcut,
+  unregisterFallbackShortcut,
+  shortcutNameForInput,
+  BINDINGS,
+  FALLBACK_BINDING
+};
