@@ -38,7 +38,7 @@ The app lives in the **menu bar / system tray** (no Dock icon on macOS). A note 
 - **Delete a note permanently:** only from the Notes Manager, with a confirmation prompt.
 - **Quit:** tray icon → Quit
 
-If a global shortcut above doesn't register (another app already uses it), Ghost Notes logs a warning and keeps running — that shortcut just won't fire; everything is still reachable from the tray menu and Notes Manager.
+Keyboard shortcuts work while a Ghost Notes note or the Notes Manager has focus. They stay inactive in other apps, so the same shortcuts remain available to your browser, IDE, and operating system.
 
 Notes (text, position, size, color, opacity, open/hidden state) auto-save and reappear on next launch. Data lives in a single local JSON file in the OS app-data folder — never uploaded anywhere.
 

@@ -1,9 +1,7 @@
-// Global shortcuts. Kept in one place so accelerators are easy to audit
-// for conflicts with common OS/app shortcuts (Cmd/Ctrl+Shift+N and +H are
-// used by some browsers for private-window/history — Shift is included
-// deliberately to reduce collisions, and registration failure is silent
-// per Electron's design, so we log it instead of assuming success).
-const { globalShortcut } = require('electron');
+// App-scoped shortcuts. Listening on a Ghost Notes window's webContents keeps
+// these bindings inactive while another app has focus, so common shortcuts
+// such as Cmd+Shift+N remain available to browsers and IDEs.
+const platform = require('./platform');
 
 const BINDINGS = {
   newNote: 'CommandOrControl+Shift+N',
@@ -12,17 +10,27 @@ const BINDINGS = {
   openManager: 'CommandOrControl+Shift+M'
 };
 
-function registerShortcuts(actions) {
-  for (const [name, accelerator] of Object.entries(BINDINGS)) {
-    const handler = actions[name];
-    if (!handler) continue;
-    const ok = globalShortcut.register(accelerator, handler);
-    if (!ok) console.warn(`Shortcut ${accelerator} (${name}) could not be registered — likely in use by another app.`);
-  }
+const ACTION_BY_KEY = {
+  n: 'newNote',
+  h: 'toggleHideAll',
+  g: 'toggleGhostAll',
+  m: 'openManager'
+};
+
+function shortcutNameForInput(input) {
+  if (!input || input.type !== 'keyDown' || input.isAutoRepeat) return null;
+  if (!platform.isCommandOrControlPressed(input) || !input.shift || input.alt) return null;
+  return ACTION_BY_KEY[String(input.key || '').toLowerCase()] || null;
 }
 
-function unregisterAll() {
-  globalShortcut.unregisterAll();
+function registerShortcuts(win, actions) {
+  win.webContents.on('before-input-event', (event, input) => {
+    const name = shortcutNameForInput(input);
+    const handler = name && actions[name];
+    if (!handler) return;
+    event.preventDefault();
+    handler();
+  });
 }
 
-module.exports = { registerShortcuts, unregisterAll, BINDINGS };
+module.exports = { registerShortcuts, shortcutNameForInput, BINDINGS };

@@ -4,7 +4,7 @@ const { NoteStore } = require('./store');
 const platform = require('./platform');
 const { createNoteWindow, applyContentProtection } = require('./noteWindow');
 const { clampToVisibleDisplay, displayIdForPoint } = require('./displayUtils');
-const { registerShortcuts, unregisterAll } = require('./shortcuts');
+const { registerShortcuts } = require('./shortcuts');
 const { createManagerModule } = require('./manager');
 
 // Show plain-language notices only — never a raw stack trace to the user.
@@ -74,7 +74,9 @@ function createManager() {
       hideNote: (id) => hideNote(id),
       deleteNoteRecord: (id) => deleteNoteRecord(id),
       renameNote: (id, title) => renameNote(id, title),
-      createNote: () => createNoteNearCursor()
+      createNote: () => createNoteNearCursor(),
+      toggleHideAll: () => toggleHideAll(),
+      toggleGhostAll: () => toggleGhostAll()
     }
   });
 }
@@ -93,6 +95,12 @@ function openNoteWindow(record) {
     onClosed: () => {
       noteWindows.delete(record.id);
     }
+  });
+  registerShortcuts(win, {
+    newNote: () => createNoteNearCursor(),
+    toggleHideAll: () => toggleHideAll(),
+    toggleGhostAll: () => toggleGhostAll(),
+    openManager: () => manager.openManagerWindow()
   });
   noteWindows.set(record.id, win);
   return win;
@@ -328,13 +336,6 @@ if (!gotLock) {
       }
     }
 
-    registerShortcuts({
-      newNote: () => createNoteNearCursor(),
-      toggleHideAll: () => toggleHideAll(),
-      toggleGhostAll: () => toggleGhostAll(),
-      openManager: () => manager.openManagerWindow()
-    });
-
     screen.on('display-added', reconcileOpenWindowsToDisplays);
     screen.on('display-removed', reconcileOpenWindowsToDisplays);
     screen.on('display-metrics-changed', reconcileOpenWindowsToDisplays);
@@ -347,10 +348,6 @@ if (!gotLock) {
 
   app.on('before-quit', () => {
     store.flush();
-  });
-
-  app.on('will-quit', () => {
-    unregisterAll();
   });
 
   // Keep running with no visible windows (tray app).

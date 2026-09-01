@@ -1,0 +1,50 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { EventEmitter } = require('node:events');
+
+const platform = require('../platform');
+const { registerShortcuts, shortcutNameForInput } = require('../shortcuts');
+
+function shortcutInput(key, overrides = {}) {
+  return {
+    type: 'keyDown',
+    key,
+    shift: true,
+    alt: false,
+    control: !platform.isMac,
+    meta: platform.isMac,
+    isAutoRepeat: false,
+    ...overrides
+  };
+}
+
+test('recognizes app shortcuts with the platform modifier', () => {
+  assert.equal(shortcutNameForInput(shortcutInput('N')), 'newNote');
+  assert.equal(shortcutNameForInput(shortcutInput('h')), 'toggleHideAll');
+  assert.equal(shortcutNameForInput(shortcutInput('G')), 'toggleGhostAll');
+  assert.equal(shortcutNameForInput(shortcutInput('m')), 'openManager');
+});
+
+test('ignores incomplete, modified, repeated, and key-up input', () => {
+  assert.equal(shortcutNameForInput(shortcutInput('n', { shift: false })), null);
+  assert.equal(shortcutNameForInput(shortcutInput('n', { alt: true })), null);
+  assert.equal(shortcutNameForInput(shortcutInput('n', platform.isMac ? { control: true } : { meta: true })), null);
+  assert.equal(shortcutNameForInput(shortcutInput('n', { isAutoRepeat: true })), null);
+  assert.equal(shortcutNameForInput(shortcutInput('n', { type: 'keyUp' })), null);
+});
+
+test('handles shortcuts only through the registered Ghost Notes window', () => {
+  const webContents = new EventEmitter();
+  let newNotes = 0;
+  registerShortcuts({ webContents }, { newNote: () => newNotes++ });
+
+  let prevented = false;
+  webContents.emit(
+    'before-input-event',
+    { preventDefault: () => { prevented = true; } },
+    shortcutInput('n')
+  );
+
+  assert.equal(newNotes, 1);
+  assert.equal(prevented, true);
+});

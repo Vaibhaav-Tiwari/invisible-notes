@@ -4,6 +4,7 @@
 // touches the store directly — main.js stays the single source of truth.
 const path = require('path');
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { registerShortcuts } = require('./shortcuts');
 
 const MAX_TITLE_LENGTH = 80;
 
@@ -41,6 +42,12 @@ function createManagerModule({ store, actions }) {
       }
     });
     win.setMenuBarVisibility(false);
+    registerShortcuts(win, {
+      newNote: actions.createNote,
+      toggleHideAll: actions.toggleHideAll,
+      toggleGhostAll: actions.toggleGhostAll,
+      openManager: openManagerWindow
+    });
     win.loadFile('manager.html');
     win.once('ready-to-show', () => win.show());
     win.on('closed', () => {
